@@ -15,21 +15,12 @@ UserSchema.methods.comparePassword = async function (passw) {
 UserSchema.statics.findByUserName = function (username) {
   return this.findOne({ username: username });
 };
-UserSchema.pre('save', async function(next) {
-  const saltRounds = 10; // You can adjust the number of salt rounds
-  //const user = this;
-  if (this.isModified('password') || this.isNew) {
-    try {
-      const hash = await bcrypt.hash(this.password, saltRounds);
-      this.password = hash;
-      next();
-  } catch (error) {
-     next(error);
-  }
+UserSchema.pre('save', async function () {
+  // Only hash password if new or modified
+  if (!this.isModified('password')) return;
 
-  } else {
-      next();
-  }
+  const saltRounds = 10;
+  this.password = await bcrypt.hash(this.password, saltRounds);
 });
 
 export default mongoose.model('User', UserSchema);
